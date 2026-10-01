@@ -11,6 +11,9 @@ for f in sorted(os.listdir(os.path.join(ROOT, 'assets'))):
         assets[f[:-4]] = 'data:image/png;base64,' + b
 css = rd('css/style.css')
 css = re.sub(r"url\(\.\./assets/([\w-]+)\.png\)", lambda m: f"url({assets[m.group(1)]})", css)
+# font Pixeloid incorporata
+font64 = lambda f: 'data:font/ttf;base64,' + base64.b64encode(open(os.path.join(ROOT, 'assets', 'fonts', f), 'rb').read()).decode()
+css = re.sub(r"url\(\.\./assets/fonts/([\w.-]+\.ttf)\)", lambda m: f"url({font64(m.group(1))})", css)
 html = rd('index.html')
 html = html.replace('<link rel="stylesheet" href="css/style.css">', f'<style>\n{css}\n</style>')
 js = 'window.ASSETS=' + json.dumps(assets) + ';\n' + rd('js/data.js') + '\n' + rd('js/game.js')

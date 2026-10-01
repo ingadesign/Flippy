@@ -1,11 +1,14 @@
 /* Flippy – Le pulizie del dungeon
    Palette presa dalle variabili Figma "Flippy" */
+/* Font: Pixeloid Sans di GGBotNet (SIL Open Font License, vedi assets/fonts/Pixeloid-OFL.txt) */
+@font-face{font-family:'Pixeloid Sans';src:url(../assets/fonts/PixeloidSans.ttf) format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Pixeloid Sans';src:url(../assets/fonts/PixeloidSans-Bold.ttf) format('truetype');font-weight:600 700;font-display:swap}
 :root{
   --bg-dungeon:#1E1A2B; --bg-stone:#3A3450; --bg-stone-light:#544C6E;
   --panel:#2B2338; --border:#8A6B4A; --flippy:#F28C28; --gold:#F5C542;
   --parchment:#F3E3B5; --text:#F4EEE0; --text-dark:#2B2338; --muted:#A89FBF;
   --danger:#D9534F; --good:#6CC070;
-  --px: 'Pixelify Sans', system-ui, sans-serif;
+  --px: 'Pixeloid Sans', system-ui, sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#0f0c16;color:var(--text);font-family:var(--px);overflow:hidden}
@@ -225,3 +228,19 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .islot{width:82px}
 .islot img{width:48px;height:48px}
 .inv{gap:18px}
+
+/* ---------- TOOLTIP (hover su carte e inventario) ---------- */
+#tip{position:absolute;z-index:70;width:360px;padding:12px 14px;background:var(--parchment);color:var(--text-dark);border:3px solid var(--border);border-radius:8px;box-shadow:4px 5px 0 rgba(0,0,0,.4);pointer-events:none;font-size:14px;line-height:1.4}
+#tip.hidden{display:none}
+#tip .t-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+#tip .t-head img{width:32px;height:32px;image-rendering:pixelated}
+#tip .t-head b{font-size:17px}
+#tip .t-desc{margin-bottom:8px}
+#tip ul{list-style:none;display:flex;flex-direction:column;gap:5px;border-top:2px dashed rgba(138,107,74,.5);padding-top:8px}
+#tip li{display:flex;gap:8px;align-items:flex-start}
+#tip li .tag{flex:none;color:var(--text);width:104px;text-align:center;margin-top:1px}
+#tip li img{width:24px;height:24px;flex:none;image-rendering:pixelated}
+#tip li.dirt-row{align-items:center}
+#tip .t-own{margin-top:8px;font-size:12px;opacity:.75}
+.card{cursor:help}
+.islot span{white-space:nowrap}

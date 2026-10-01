@@ -24,6 +24,33 @@ const TRAPS = {
   rete:            { nome: 'Rete',          breve: 'Rete',       prezzo: 15, materiale: 'corda',  visibile: false, mortale: false, img: 'rete', livello: 2 },
 };
 
+/* Descrizioni mostrate al passaggio del mouse sulle carte (negozio e inventario) */
+const DESCRIZIONI = {
+  scopa:   'Spazza via le ragnatele dai muri. Un clic sulla ragnatela = 1 uso.',
+  sacco:   'Raccoglie i mucchi di ossa lasciati dagli avventurieri. Un clic sul mucchio = 1 uso.',
+  sale:    'Una manciata di sale scioglie una pozza di slime normale. Sullo slime gigante non basta.',
+  pozione: 'L\'unica cosa che fa sparire lo slime gigante. Se ne può avere solo una... e qualcuno potrebbe averne più bisogno di te.',
+  retino:  'Acchiappa i ragni. Attenzione: si muovono, quindi mira bene.',
+  frecce:          'Un meccanismo nel muro scocca frecce di legno. Economica, ma i fori si vedono a occhio nudo.',
+  fossa:           'Una buca coperta da assi e polvere. Nessuno la vede finché non ci cade dentro.',
+  frecce_nascoste: 'Come le frecce, ma il meccanismo è murato e invisibile. Costa di più.',
+  tagliola:        'Ganasce di ferro che bloccano il piede. Si vede bene sul pavimento ed è di metallo.',
+  masso:           'Un masso di pietra nascosto nel soffitto che rotola giù. Non perdona: è l\'unica trappola mortale.',
+  rete:            'Una rete di corda cade dall\'alto e intrappola chi passa. Nascosta e senza metallo.',
+};
+
+/* Spiegazione delle proprietà delle trappole (per le regole del Master) */
+const PROPRIETA = {
+  legno:   'Materiale: brucia e si rompe. Conta se il Master vieta un materiale.',
+  ferro:   'Materiale: metallo. Conta se il Master vieta un materiale.',
+  pietra:  'Materiale: non brucia e non è metallo.',
+  corda:   'Materiale: non è né legno né metallo.',
+  visibile: 'I giocatori la vedono arrivare: no dove il Master vuole trappole invisibili.',
+  nascosta: 'I giocatori non la vedono: conta per le regole sulle trappole nascoste.',
+  mortale:    'Può uccidere un avventuriero: serve dove il Master la chiede, vietata dove non la vuole.',
+  nonMortale: 'Ferisce o blocca, ma non uccide nessuno.',
+};
+
 /* Tipi di sporco: quale attrezzo serve */
 const DIRT = {
   ragnatela:     { nome: 'ragnatela',     tool: 'scopa',   img: 'ragnatela' },

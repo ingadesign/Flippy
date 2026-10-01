@@ -81,4 +81,4 @@ tools/              script di build
 - Game design, grafica e sviluppo: il team del progetto.
 - Icone e personaggi (oggetti, goblin, boss, avventuriero, Master...): **Fantasy RPG Pixel Icon Megapack (lite)**. Prima di pubblicare, controllate che la licenza del pack ne permetta la redistribuzione.
 - Flippy, scopa, girini, ninfee, muri, pavimenti, acqua, porta, tavolo, d20, patatine e schermo del Master: disegnati apposta per il gioco, nello stile del pack.
-- Font: [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (SIL Open Font License).
+- Font: [Pixeloid Sans](https://ggbot.itch.io/pixeloid-font) di GGBotNet, file in `assets/fonts/` (SIL Open Font License).

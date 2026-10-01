@@ -23,6 +23,58 @@ function toStage(e) {
   return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale };
 }
 
+/* ---------- Tooltip: proprietà e uso di attrezzi e trappole ---------- */
+const tipEl = $('#tip');
+function tipHTML(key) {
+  const isTool = !!TOOLS[key], d = TOOLS[key] || TRAPS[key];
+  let props;
+  if (isTool) {
+    const dirt = DIRT[d.pulisce];
+    props = `
+      <li class="dirt-row"><img src="${A(dirt.img)}" alt=""><span><b>Pulisce:</b> ${dirt.nome}${dirt.big ? ' (quello enorme)' : ''}</span></li>
+      <li><span class="tag">${d.usi} ${d.usi === 1 ? 'uso' : 'usi'}</span><span>Ogni acquisto vale ${d.usi} ${d.usi === 1 ? 'pulizia' : 'pulizie'}.${d.max ? ' Massimo 1 alla volta.' : ''}</span></li>`;
+  } else {
+    props = `
+      <li><span class="tag ${d.materiale}">${cap(d.materiale)}</span><span>${PROPRIETA[d.materiale]}</span></li>
+      <li><span class="tag ${d.visibile ? 'visibile' : 'nascosta'}">${d.visibile ? 'Visibile' : 'Nascosta'}</span><span>${PROPRIETA[d.visibile ? 'visibile' : 'nascosta']}</span></li>
+      <li><span class="tag ${d.mortale ? 'mortale' : ''}">${d.mortale ? 'Mortale' : 'Non mortale'}</span><span>${PROPRIETA[d.mortale ? 'mortale' : 'nonMortale']}</span></li>`;
+  }
+  const owned = isTool ? S.tools[key] : S.traps[key];
+  const how = isTool ? 'Uso: clicca l\'attrezzo, poi clicca lo sporco.' : 'Uso: trascinala su uno slot (o clicca lei e poi lo slot).';
+  return `<div class="t-head"><img src="${A(d.img)}" alt=""><b>${d.nome}</b></div>
+    <div class="t-desc">${DESCRIZIONI[key] || ''}</div>
+    <ul>${props}</ul>
+    <div class="t-own">${how}<br>Ne hai: ${owned ?? 0}${isTool ? ' usi' : ''}</div>`;
+}
+function hideTip() { tipEl.classList.add('hidden'); tipEl._for = null; }
+function showTip(el) {
+  if (dragging) return;
+  const key = el.dataset.tip;
+  tipEl.innerHTML = tipHTML(key); tipEl._for = el;
+  tipEl.classList.remove('hidden');
+  const sr = stage.getBoundingClientRect(), r = el.getBoundingClientRect();
+  const box = { x: (r.left - sr.left) / scale, y: (r.top - sr.top) / scale, w: r.width / scale, h: r.height / scale };
+  const tw = tipEl.offsetWidth, th = tipEl.offsetHeight, gap = 10;
+  let x = box.x + box.w / 2 - tw / 2;
+  x = Math.max(12, Math.min(1280 - tw - 12, x));
+  let y = box.y - th - gap;                              // sopra la carta
+  if (y < 12) y = box.y + box.h + gap;                   // se non c'è spazio, sotto
+  if (y + th > 708) {                                    // né sopra né sotto: di lato
+    y = Math.max(12, Math.min(708 - th, box.y));
+    x = box.x + box.w + gap; if (x + tw > 1268) x = box.x - tw - gap;
+  }
+  tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+}
+let dragging = false;
+stage.addEventListener('pointerover', e => {
+  if (e.pointerType === 'touch') return;
+  const el = e.target.closest('[data-tip]');
+  if (el && el !== tipEl._for) showTip(el);
+  else if (!el && tipEl._for) hideTip();
+});
+stage.addEventListener('pointerleave', hideTip);
+stage.addEventListener('pointerdown', hideTip);
+
 /* ---------- Suoni (WebAudio, niente file) ---------- */
 let actx = null;
 function sfx(type) {
@@ -71,6 +123,7 @@ function show(id) {
   $('#scr-' + id).classList.add('active');
   if (id !== 'room') clearInterval(roomTimer);
   $('#toast').classList.add('hidden');
+  hideTip();
 }
 function toast(text, ms = 1800) {
   const t = $('#toast'); t.textContent = text; t.classList.remove('hidden');
@@ -197,7 +250,7 @@ function renderShop() {
     const tags = isTool
       ? `<span class="tag">${def.usi} ${def.usi === 1 ? 'uso' : 'usi'}</span>${def.max ? '<span class="tag mortale">max 1</span>' : ''}`
       : `<span class="tag ${def.materiale}">${cap(def.materiale)}</span><span class="tag ${def.visibile ? 'visibile' : 'nascosta'}">${def.visibile ? 'Visibile' : 'Nascosta'}</span>${def.mortale ? '<span class="tag mortale">Mortale</span>' : ''}`;
-    return `<div class="card ${n ? 'sel' : ''}">
+    return `<div class="card ${n ? 'sel' : ''}" data-tip="${key}">
       <img class="ico" src="${A(def.img)}" alt="">
       <div class="nm">${def.nome}${def.livello && S.level === 1 ? ' <span class="tag mortale" style="background:var(--good)">NUOVO</span>' : ''}</div>
       <div class="pr"><img src="${A('moneta')}" alt="">${def.prezzo}</div>
@@ -452,7 +505,7 @@ function changeRule() {
 function renderInv() {
   const inv = $('#inv'); if (!inv) return;
   const slot = (key, def, n, kind) => `
-    <div class="islot ${n ? '' : 'empty'} ${(kind === 'tool' ? R.selTool : R.selTrap) === key ? 'sel' : ''}" data-k="${key}" data-kind="${kind}" role="button" tabindex="0" aria-label="${def.nome}, ${n}">
+    <div class="islot ${n ? '' : 'empty'} ${(kind === 'tool' ? R.selTool : R.selTrap) === key ? 'sel' : ''}" data-k="${key}" data-kind="${kind}" data-tip="${key}" role="button" tabindex="0" aria-label="${def.nome}, ${n}">
       <span class="n">x${n}</span><img src="${A(def.img)}" alt=""><span>${def.breve || def.nome}</span>
     </div>`;
   inv.innerHTML = `
@@ -485,6 +538,7 @@ function startDrag(e, key) {
   e.preventDefault();
   const start = toStage(e);
   let ghost = null, moved = false;
+  dragging = true; hideTip();
   const move = ev => {
     const p = toStage(ev);
     if (!moved && Math.hypot(p.x - start.x, p.y - start.y) > 6) {
@@ -500,6 +554,7 @@ function startDrag(e, key) {
   };
   const up = ev => {
     window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+    dragging = false;
     if (ghost) ghost.remove();
     if (!moved) { toggleTrap(key); return; }
     const t = slotAt(ev);
