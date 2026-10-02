@@ -11,7 +11,7 @@ const TOOLS = {
   sacco:   { nome: 'Sacco',   prezzo: 5,  usi: 6, pulisce: 'ossa',      img: 'sacco' },
   sale:    { nome: 'Sale',    prezzo: 10, usi: 2, pulisce: 'slime',     img: 'sale' },
   pozione: { nome: 'Pozione', prezzo: 15, usi: 1, pulisce: 'slime_gigante', img: 'pozione', max: 1 },
-  retino:  { nome: 'Retino',  prezzo: 6,  usi: 3, pulisce: 'ragno',     img: 'retino', livello: 2 },
+  retino:  { nome: 'Retino',  prezzo: 5,  usi: 3, pulisce: 'ragno',     img: 'retino', livello: 2 },
 };
 
 /* Trappole: materiale, visibile, mortale servono per le regole del Master */
@@ -45,7 +45,7 @@ const PROPRIETA = {
   ferro:   'Materiale: metallo. Conta se il Master vieta un materiale.',
   pietra:  'Materiale: non brucia e non è metallo.',
   corda:   'Materiale: non è né legno né metallo.',
-  visibile: 'I giocatori la vedono arrivare: no dove il Master vuole trappole invisibili.',
+  visibile: 'I giocatori la vedono arrivare: vietata dove il Master vuole trappole invisibili.',
   nascosta: 'I giocatori non la vedono: conta per le regole sulle trappole nascoste.',
   mortale:    'Può uccidere un avventuriero: serve dove il Master la chiede, vietata dove non la vuole.',
   nonMortale: 'Ferisce o blocca, ma non uccide nessuno.',
@@ -98,7 +98,7 @@ const SOFFIATE = {
   4: [
     { ico: 'ragno', t: '«La cripta è un condominio di ragni. Vivi. Che scappano. Il retino nuovo serve a questo.»' },
     { ico: 'ragnatela', t: '«Ragnatele e ossa ci sono sempre: è una cripta, mica un asilo nido.»' },
-    { ico: 'tagliola', t: '«C\'è un golem magnetico: niente ferro, o se lo attacca addosso. E almeno due trappole nascoste.»' },
+    { ico: 'tagliola', t: '«C\'è un golem magnetico: niente ferro o se lo attacca addosso. E almeno due trappole nascoste.»' },
   ],
   5: [
     { ico: 'slime', t: '«Qualcuno ha rovesciato un secchio di slime sulle monete. Due pozze, minimo.»' },
