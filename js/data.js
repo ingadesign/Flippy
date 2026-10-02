@@ -65,8 +65,64 @@ const PROLOGO = [
   '«Benvenuta al mio tavolo, ranocchia! Funziona come una partita di ruolo: io sono il Master. Scrivo il dungeon, tiro i dadi dietro lo schermo e decido le regole. Tu? Tu sei la miniatura arancione lì in fondo.»',
   '«Stasera arrivano i miei giocatori. Problema: il dungeon è ancora sporco dalla sessione scorsa. Ragnatele, ossa, slime... uno schifo. Il tuo lavoro è pulire e rimettere le trappole giuste.»',
   '«Ti do 100 monete d\'oro. Prima di ogni stanza passi dal mio carretto e compri attrezzi e trappole. Il budget è uno solo per tutto il dungeon: se lo bruci subito, poi sono affari tuoi.»',
-  '«Le regole di ogni stanza le trovi sul mio post-it. Leggile. Potrei cambiarle. Anzi, le cambierò. E se incontri qualcuno nel dungeon... fai le tue scelte. Io lo verrò a sapere. Si comincia!»',
+  '«E non scordarti dei tuoi girini. A fine serata allo stagno servono 40 monete: 25 per il cibo e 15 per il riscaldamento. Li paghi con quello che ti avanza più la paga che ti do io. Ogni moneta sprecata al carretto è una cena in meno.»',
+  '«Le regole di ogni stanza le trovi sul mio post-it. Leggile. Potrei cambiarle. Anzi, le cambierò. E se incontri qualcuno nel dungeon... fai le tue scelte. Io lo verrò a sapere. Al carretto ti lascio sempre qualche soffiata: leggila prima di comprare. Si comincia!»',
 ];
+
+/* =========================================================
+   STRATEGIA AL CARRETTO
+   Soffiate gratuite (in tono col Master) e appunti segreti a pagamento.
+   "quando" (facoltativo) mostra la soffiata solo in certe situazioni:
+   goblinTenuto, goblinNonTenuto, tangenteRifiutata, cugino, noCugino
+   ========================================================= */
+const SPESE_STAGNO = 40;       // cibo (25) + riscaldamento (15)
+const PREZZO_APPUNTI = 5;      // costo degli appunti segreti del Master
+
+const SOFFIATE = {
+  1: [
+    { ico: 'ragnatela', t: '«Da quando ho chiuso l\'ingresso nessuno spolvera. I ragni ci hanno fatto la villeggiatura: ragnatele su tutti i muri.»' },
+    { ico: 'ossa', t: '«Il primo guerriero della mia campagna è morto proprio lì, sulla soglia. Anni fa. I suoi resti... sì, sono ancora sul pavimento.»' },
+    { ico: 'frecce', t: '«È il primo livello: basta una trappola e niente roba mortale. Non voglio sterminare il gruppo alla porta.»' },
+  ],
+  2: [
+    { ico: 'slime', t: '«Nel corridoio è passato un cubo gelatinoso. Ha lasciato dei... ricordini. Appiccicosi. Odiano il sale.»' },
+    { ico: 'ossa', t: '«Qualche osso e qualche ragnatela: il solito arredamento.»', quando: 'goblinNonTenuto' },
+    { ico: 'goblin', t: '«Le ossa? Ci pensa il tuo amico goblin. Le ragnatele invece restano tue.»', quando: 'goblinTenuto' },
+    { ico: 'fossa', t: '«Il ladro del gruppo ha Percezione +5: una trappola che si vede, la trova. E gli slot sono tre, tutti da armare.»' },
+  ],
+  3: [
+    { ico: 'slime', t: '«Lo slime della sala del boss è cresciuto. Tanto. Il sale gli fa il solletico: serve qualcosa di più... magico.»' },
+    { ico: 'ossa', t: '«Il boss offeso ha sparso ossa dappertutto. Te l\'avevo detto che se la legava al dito.»', quando: 'tangenteRifiutata' },
+    { ico: 'masso', t: '«Qui deve fare paura: almeno una trappola mortale. E io sono un Master, potrei cambiare idea sulle regole. Tienilo a mente.»' },
+  ],
+  4: [
+    { ico: 'ragno', t: '«La cripta è un condominio di ragni. Vivi. Che scappano. Il retino nuovo serve a questo.»' },
+    { ico: 'ragnatela', t: '«Ragnatele e ossa ci sono sempre: è una cripta, mica un asilo nido.»' },
+    { ico: 'tagliola', t: '«C\'è un golem magnetico: niente ferro, o se lo attacca addosso. E almeno due trappole nascoste.»' },
+  ],
+  5: [
+    { ico: 'slime', t: '«Qualcuno ha rovesciato un secchio di slime sulle monete. Due pozze, minimo.»' },
+    { ico: 'ragno', t: '«I ragni seguono l\'odore dell\'oro. Ne troverai anche qui.»', quando: 'noCugino' },
+    { ico: 'cugino', t: '«I ragni? Il cugino del goblin ha promesso di pensarci lui.»', quando: 'cugino' },
+    { ico: 'd20', t: '«Una trappola mortale, UNA. E tieni qualcosa di scorta: stasera tiro il d20.»' },
+  ],
+};
+
+/* Appunti segreti: si comprano al carretto (una volta per stanza) */
+const APPUNTI_SEGRETI = {
+  1: '«Quell\'elmo abbandonato per terra? Raccoglilo: al carretto te lo pago 20 monete. E il barile che trema... non è vuoto.»',
+  2: '«A metà corridoio il boss proverà a corromperti. Se rifiuti, si vendica: nella sala del boss troverai ossa in più.»',
+  3: '«Spoiler: a metà stanza il boss diventa un DRAGO e il legno sarà VIETATO. Niente trappole di legno qui. E l\'avventuriero ferito ti chiederà la pozione.»',
+  4: '«La rete è di corda e nascosta: il golem non la sente nemmeno. Due reti e sei a posto.»',
+  5: '«Se col d20 esce 10 o meno, aggiungo un terzo slot: tieni una trappola NON mortale di scorta. E se Marco ti offre soldi, la stanza è persa.»',
+};
+const OBIETTIVO_TRAPPOLE = {
+  1: 'almeno 1 trappola, nessuna mortale',
+  2: 'tutti gli slot armati, solo trappole nascoste',
+  3: 'tutti gli slot armati, almeno 1 mortale, niente legno',
+  4: 'almeno 2 nascoste, niente ferro',
+  5: 'tutti gli slot armati, esattamente 1 mortale',
+};
 
 /* Stanze. Coordinate in pixel sul palco 1280x720 (l'area di gioco è alta 560). */
 const ROOMS = [

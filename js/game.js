@@ -110,6 +110,7 @@ function newGame() {
     repMaster: 0, repCreature: 0,
     goblinFine: 0,
     pond: { cibo: false, caldo: false },
+    appunti: {},       // stanze di cui hai comprato gli appunti segreti
   };
 }
 
@@ -226,14 +227,72 @@ function renderPrologue(page, lines = PROLOGO, chip = 'PROLOGO · IL TAVOLO DEL 
    CARRETTO DEL MASTER (negozio prima di ogni stanza)
    ========================================================= */
 let cart = {};
-const SHOP_NOTES = [[
-  '«Ti ho dato 100 monete, non un mutuo. Spendile con la testa.»',
-  '«Il corridoio ha slime. Gli slime odiano il sale. Te lo dico solo perché sono buono.»',
-  '«Ultima spesa. La sala del boss deve fare paura. E c\'è uno slime enorme, sappilo.»',
-], [
-  '«Gli attrezzi avanzati la settimana scorsa ce li hai ancora. Controlla prima di ricomprare.»',
-  '«Tesoreria: UNA trappola mortale, non due. E tieni qualcosa da parte: tiro il d20.»',
-]];
+/* ---------- Strategia: soffiate, appunti segreti, girini ---------- */
+const CONDIZIONI = {
+  goblinTenuto: () => S.goblin === 'tenuto',
+  goblinNonTenuto: () => S.goblin !== 'tenuto',
+  tangenteRifiutata: () => S.bribe === false,
+  cugino: () => !!S.cousin,
+  noCugino: () => !S.cousin,
+};
+const soffiate = room => SOFFIATE[room.id].filter(t => !t.quando || CONDIZIONI[t.quando]());
+
+// Sporco previsto nella stanza (con le conseguenze delle scelte già fatte)
+function sporcoPrevisto(room) {
+  const list = room.sporco.map(d => d.tipo);
+  if (room.id === 3 && S.bribe === false) list.push('ossa');
+  return list.filter(t => !(t === 'ossa' && S.goblin === 'tenuto' && room.id > 1)
+    && !(t === 'ragno' && S.cousin && room.id === 5));
+}
+// Trappole che non violano le regole della stanza
+const trappolaAdatta = {
+  1: t => !t.mortale,
+  2: t => !t.visibile,
+  3: t => t.materiale !== 'legno',
+  4: t => t.materiale !== 'ferro',
+  5: () => true,
+};
+function openAppunti(room) {
+  const counts = {};
+  sporcoPrevisto(room).forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+  const righeSporco = Object.entries(counts).map(([tipo, n]) => {
+    const tk = DIRT[tipo].tool, tool = TOOLS[tk];
+    const have = S.tools[tk] + (cart[tk] || 0) * tool.usi;
+    const ok = have >= n;
+    return `<li><img src="${A(DIRT[tipo].img)}" alt=""><span><b>${n} × ${DIRT[tipo].nome}</b> → ${tool.nome.toLowerCase()} (${n} ${n === 1 ? 'uso' : 'usi'})</span>
+      <span class="${ok ? 'good' : 'bad'}">${ok ? '✓ ' : ''}ne hai ${have}</span></li>`;
+  }).join('');
+  const adatte = Object.entries(TRAPS).filter(([, t]) => unlocked(t) && trappolaAdatta[room.id](t))
+    .map(([k, t]) => `<span class="tag ${t.mortale ? 'mortale' : t.visibile ? 'visibile' : 'nascosta'}">${t.nome}${t.mortale ? ' ☠' : ''}</span>`).join(' ');
+  modalOpen = true;
+  const m = $('#modal');
+  m.innerHTML = `
+    <div class="appunti">
+      <div class="ap-head"><img src="${A('schermo')}" alt=""><div><b>APPUNTI SEGRETI DEL MASTER</b><span>Dietro lo schermo · ${room.nome}</span></div></div>
+      <h4>SPORCO DA PULIRE</h4>
+      <ul class="ap-list">${righeSporco}</ul>
+      <h4>TRAPPOLE · ${room.slots.length} slot</h4>
+      <p>Obiettivo: <b>${OBIETTIVO_TRAPPOLE[room.id]}</b>.</p>
+      <p>Vanno bene: ${adatte}</p>
+      <h4>IL SEGRETO</h4>
+      <p class="ap-secret">${APPUNTI_SEGRETI[room.id]}</p>
+      <button class="small-btn" id="btn-ap-close">HO CAPITO, CAPO</button>
+    </div>`;
+  m.classList.remove('hidden');
+  $('#btn-ap-close').onclick = () => { sfx('click'); m.classList.add('hidden'); modalOpen = false; };
+}
+function girini(left) {
+  const pct = Math.min(100, Math.round(left / SPESE_STAGNO * 100));
+  const ok = left >= SPESE_STAGNO;
+  return `<div class="girini">
+    <div class="g-head"><img src="${A('girino')}" alt=""><b>LA CENA DEI GIRINI</b><span class="gold">${SPESE_STAGNO} <img class="coin-s" src="${A('moneta')}" alt="monete"></span></div>
+    <div class="g-bar"><i class="${ok ? 'ok' : ''}" style="width:${pct}%"></i></div>
+    <p>${ok
+      ? `Con ${left} monete da parte, i girini mangiano anche se il Master ti paga poco.`
+      : `Ti resterebbero ${left} monete. Per i girini conterai sulla paga: 10 monete per ogni punto di voto. Lavora bene.`}</p>
+  </div>`;
+}
+
 function cartCost() {
   let c = 0;
   for (const [k, n] of Object.entries(cart)) c += (TOOLS[k] || TRAPS[k]).prezzo * n;
@@ -261,10 +320,6 @@ function renderShop() {
         <button data-k="${key}" data-d="1" ${canBuy ? '' : 'disabled'}>COMPRA</button>
       </div></div>`;
   };
-  const rows = Object.entries(cart).filter(([, n]) => n).map(([k, n]) => {
-    const d = TOOLS[k] || TRAPS[k];
-    return `<div class="row"><span>${d.nome} ×${n}</span><span class="gold">${d.prezzo * n}</span></div>`;
-  }).join('') || '<div class="muted">Il carretto è vuoto.</div>';
   $('#scr-shop').innerHTML = `
     <div class="shop-head">
       <div><h1>IL CARRETTO DEL MASTER</h1><p>${S.level ? 'Sessione 2 · ' : ''}Prima della stanza «${room.nome}» — il budget vale per tutta la sessione</p></div>
@@ -276,18 +331,15 @@ function renderShop() {
         <h3 style="margin-top:14px">TRAPPOLE</h3><div class="cards">${Object.entries(TRAPS).filter(([, d]) => unlocked(d)).map(([k, d]) => card(k, d, false)).join('')}</div>
       </div>
       <div class="cart panel">
-        <h2>NEL CARRETTO</h2>
-        <div class="rows">${rows}</div>
-        <hr>
-        <div class="rows">
-          <div class="row"><b>Totale</b><span class="gold">${cartCost()}</span></div>
-          <div class="row"><span>Restano dopo l'acquisto</span><span class="gold">${left}</span></div>
-        </div>
-        ${S.elmo ? `<button class="btn ghost" id="btn-elmo" style="width:100%;color:var(--gold);border-color:var(--gold)">VENDI L'ELMO ABBANDONATO +20</button>` : ''}
-        <div class="note"><b>MASTER:</b>${SHOP_NOTES[S.level][S.roomIndex]}</div>
-        <div><div class="muted" style="font-size:13px;font-weight:600">PROSSIMA STANZA</div>
-          <div style="font-size:16px">${room.nome} · ${room.slots.length} slot · ${room.regole.length} regole</div></div>
+        <div class="tips-head"><img src="${A('master')}" alt=""><div><h2>SOFFIATE DEL MASTER</h2><span class="muted">${room.nome} · ${room.slots.length} slot · ${room.regole.length} regole</span></div></div>
+        <ul class="tips">${soffiate(room).map(t => `<li><img src="${A(t.ico)}" alt=""><span>${t.t}</span></li>`).join('')}</ul>
+        <button class="btn ghost secret-btn" id="btn-appunti">${S.appunti[room.id]
+          ? '📜 RILEGGI GLI APPUNTI SEGRETI'
+          : `📜 APPUNTI SEGRETI DEL MASTER <span class="gold">· ${PREZZO_APPUNTI} <img class="coin-s" src="${A('moneta')}" alt="monete"></span>`}</button>
+        ${S.level === 0 ? girini(left) : ''}
         <div class="grow"></div>
+        ${S.elmo ? `<button class="btn ghost" id="btn-elmo" style="width:100%;color:var(--gold);border-color:var(--gold)">VENDI L'ELMO ABBANDONATO +20</button>` : ''}
+        <div class="cart-sum"><span>Nel carretto: <b class="gold">${cartCost()}</b></span><span>Ti restano: <b class="gold">${left}</b></span></div>
         <button class="btn" id="btn-go">VAI: ${room.nome.toUpperCase()} →</button>
       </div>
     </div>`;
@@ -296,6 +348,13 @@ function renderShop() {
     cart[k] = Math.max(0, (cart[k] || 0) + d);
     sfx(d > 0 ? 'coin' : 'click'); renderShop();
   });
+  $('#btn-appunti').onclick = () => {
+    if (!S.appunti[room.id]) {
+      if (left < PREZZO_APPUNTI) { sfx('bad'); toast(`Gli appunti costano ${PREZZO_APPUNTI} monete: togli qualcosa dal carretto.`, 2400); return; }
+      S.money -= PREZZO_APPUNTI; S.appunti[room.id] = true; sfx('coin');
+    } else sfx('click');
+    renderShop(); openAppunti(room);
+  };
   const be = $('#btn-elmo');
   if (be) be.onclick = () => { S.elmo = false; S.money += 20; sfx('coin'); toast('Elmo venduto: +20 monete'); renderShop(); };
   $('#btn-go').onclick = () => {

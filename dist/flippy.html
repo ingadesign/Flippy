@@ -252,6 +252,49 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .card{cursor:help}
 .islot span{white-space:nowrap}
 
+/* ---------- CARRETTO: soffiate, appunti segreti, girini ---------- */
+.catalog{width:756px}
+.cart{width:420px;padding:16px 18px;gap:10px}
+.tips-head{display:flex;gap:10px;align-items:center}
+.tips-head img{width:44px;height:44px;image-rendering:pixelated;background:var(--bg-stone);border-radius:8px;padding:2px}
+.tips-head h2{font-size:18px;color:var(--gold)}
+.tips-head span{font-size:12px}
+.tips{list-style:none;display:flex;flex-direction:column;gap:7px;background:var(--parchment);color:var(--text-dark);border-radius:6px;padding:10px 12px}
+.tips li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.35}
+.tips li img{width:28px;height:28px;flex:none;image-rendering:pixelated}
+.tips li+li{border-top:1px dashed rgba(138,107,74,.5);padding-top:7px}
+.secret-btn{width:100%;font-size:13px !important;color:var(--text) !important;border-color:var(--gold) !important;display:flex;align-items:center;justify-content:center;gap:6px}
+.coin-s{width:16px;height:16px;vertical-align:-3px}
+.girini{background:var(--bg-stone);border-radius:8px;padding:9px 12px;display:flex;flex-direction:column;gap:6px}
+.girini .g-head{display:flex;align-items:center;gap:8px;font-size:13px}
+.girini .g-head img{width:24px;height:24px}
+.girini .g-head b{flex:1}
+.g-bar{height:8px;background:var(--panel);border-radius:4px;overflow:hidden}
+.g-bar i{display:block;height:100%;background:var(--flippy)}
+.g-bar i.ok{background:var(--good)}
+.girini p{font-size:12px;line-height:1.35;color:var(--muted)}
+.cart-sum{display:flex;justify-content:space-between;font-size:15px}
+/* Appunti segreti (finestra) */
+.appunti{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-1deg);width:620px;background:var(--parchment);color:var(--text-dark);border:4px solid var(--border);border-radius:8px;box-shadow:8px 10px 0 rgba(0,0,0,.45);padding:22px 26px;display:flex;flex-direction:column;gap:8px}
+.ap-head{display:flex;gap:12px;align-items:center;margin-bottom:4px}
+.ap-head img{width:56px;height:56px;image-rendering:pixelated}
+.ap-head b{display:block;font-size:22px}
+.ap-head span{font-size:13px;opacity:.7}
+.appunti h4{font-size:13px;color:var(--border);margin-top:6px;letter-spacing:1px}
+.appunti p{font-size:15px;line-height:1.4}
+.ap-list{list-style:none;display:flex;flex-direction:column;gap:4px}
+.ap-list li{display:flex;align-items:center;gap:10px;font-size:15px}
+.ap-list li img{width:28px;height:28px}
+.ap-list li span:nth-child(2){flex:1}
+.appunti .tag{color:var(--text);font-size:12px;margin:2px 0}
+.appunti .good{color:#2f7a35}.appunti .bad{color:#b0262c}
+.ap-secret{background:rgba(138,107,74,.15);border-radius:6px;padding:10px 12px;font-style:italic}
+.appunti .small-btn{align-self:flex-end;margin-top:6px}
+.card{padding:9px 6px;gap:5px}
+.card .tags{gap:3px}
+.card .tags .tag{font-size:10px;padding:2px 4px}
+.girini .g-head img{width:30px;height:30px}
+
 </style>
 </head>
 <body>
@@ -339,8 +382,64 @@ const PROLOGO = [
   '«Benvenuta al mio tavolo, ranocchia! Funziona come una partita di ruolo: io sono il Master. Scrivo il dungeon, tiro i dadi dietro lo schermo e decido le regole. Tu? Tu sei la miniatura arancione lì in fondo.»',
   '«Stasera arrivano i miei giocatori. Problema: il dungeon è ancora sporco dalla sessione scorsa. Ragnatele, ossa, slime... uno schifo. Il tuo lavoro è pulire e rimettere le trappole giuste.»',
   '«Ti do 100 monete d\'oro. Prima di ogni stanza passi dal mio carretto e compri attrezzi e trappole. Il budget è uno solo per tutto il dungeon: se lo bruci subito, poi sono affari tuoi.»',
-  '«Le regole di ogni stanza le trovi sul mio post-it. Leggile. Potrei cambiarle. Anzi, le cambierò. E se incontri qualcuno nel dungeon... fai le tue scelte. Io lo verrò a sapere. Si comincia!»',
+  '«E non scordarti dei tuoi girini. A fine serata allo stagno servono 40 monete: 25 per il cibo e 15 per il riscaldamento. Li paghi con quello che ti avanza più la paga che ti do io. Ogni moneta sprecata al carretto è una cena in meno.»',
+  '«Le regole di ogni stanza le trovi sul mio post-it. Leggile. Potrei cambiarle. Anzi, le cambierò. E se incontri qualcuno nel dungeon... fai le tue scelte. Io lo verrò a sapere. Al carretto ti lascio sempre qualche soffiata: leggila prima di comprare. Si comincia!»',
 ];
+
+/* =========================================================
+   STRATEGIA AL CARRETTO
+   Soffiate gratuite (in tono col Master) e appunti segreti a pagamento.
+   "quando" (facoltativo) mostra la soffiata solo in certe situazioni:
+   goblinTenuto, goblinNonTenuto, tangenteRifiutata, cugino, noCugino
+   ========================================================= */
+const SPESE_STAGNO = 40;       // cibo (25) + riscaldamento (15)
+const PREZZO_APPUNTI = 5;      // costo degli appunti segreti del Master
+
+const SOFFIATE = {
+  1: [
+    { ico: 'ragnatela', t: '«Da quando ho chiuso l\'ingresso nessuno spolvera. I ragni ci hanno fatto la villeggiatura: ragnatele su tutti i muri.»' },
+    { ico: 'ossa', t: '«Il primo guerriero della mia campagna è morto proprio lì, sulla soglia. Anni fa. I suoi resti... sì, sono ancora sul pavimento.»' },
+    { ico: 'frecce', t: '«È il primo livello: basta una trappola e niente roba mortale. Non voglio sterminare il gruppo alla porta.»' },
+  ],
+  2: [
+    { ico: 'slime', t: '«Nel corridoio è passato un cubo gelatinoso. Ha lasciato dei... ricordini. Appiccicosi. Odiano il sale.»' },
+    { ico: 'ossa', t: '«Qualche osso e qualche ragnatela: il solito arredamento.»', quando: 'goblinNonTenuto' },
+    { ico: 'goblin', t: '«Le ossa? Ci pensa il tuo amico goblin. Le ragnatele invece restano tue.»', quando: 'goblinTenuto' },
+    { ico: 'fossa', t: '«Il ladro del gruppo ha Percezione +5: una trappola che si vede, la trova. E gli slot sono tre, tutti da armare.»' },
+  ],
+  3: [
+    { ico: 'slime', t: '«Lo slime della sala del boss è cresciuto. Tanto. Il sale gli fa il solletico: serve qualcosa di più... magico.»' },
+    { ico: 'ossa', t: '«Il boss offeso ha sparso ossa dappertutto. Te l\'avevo detto che se la legava al dito.»', quando: 'tangenteRifiutata' },
+    { ico: 'masso', t: '«Qui deve fare paura: almeno una trappola mortale. E io sono un Master, potrei cambiare idea sulle regole. Tienilo a mente.»' },
+  ],
+  4: [
+    { ico: 'ragno', t: '«La cripta è un condominio di ragni. Vivi. Che scappano. Il retino nuovo serve a questo.»' },
+    { ico: 'ragnatela', t: '«Ragnatele e ossa ci sono sempre: è una cripta, mica un asilo nido.»' },
+    { ico: 'tagliola', t: '«C\'è un golem magnetico: niente ferro, o se lo attacca addosso. E almeno due trappole nascoste.»' },
+  ],
+  5: [
+    { ico: 'slime', t: '«Qualcuno ha rovesciato un secchio di slime sulle monete. Due pozze, minimo.»' },
+    { ico: 'ragno', t: '«I ragni seguono l\'odore dell\'oro. Ne troverai anche qui.»', quando: 'noCugino' },
+    { ico: 'cugino', t: '«I ragni? Il cugino del goblin ha promesso di pensarci lui.»', quando: 'cugino' },
+    { ico: 'd20', t: '«Una trappola mortale, UNA. E tieni qualcosa di scorta: stasera tiro il d20.»' },
+  ],
+};
+
+/* Appunti segreti: si comprano al carretto (una volta per stanza) */
+const APPUNTI_SEGRETI = {
+  1: '«Quell\'elmo abbandonato per terra? Raccoglilo: al carretto te lo pago 20 monete. E il barile che trema... non è vuoto.»',
+  2: '«A metà corridoio il boss proverà a corromperti. Se rifiuti, si vendica: nella sala del boss troverai ossa in più.»',
+  3: '«Spoiler: a metà stanza il boss diventa un DRAGO e il legno sarà VIETATO. Niente trappole di legno qui. E l\'avventuriero ferito ti chiederà la pozione.»',
+  4: '«La rete è di corda e nascosta: il golem non la sente nemmeno. Due reti e sei a posto.»',
+  5: '«Se col d20 esce 10 o meno, aggiungo un terzo slot: tieni una trappola NON mortale di scorta. E se Marco ti offre soldi, la stanza è persa.»',
+};
+const OBIETTIVO_TRAPPOLE = {
+  1: 'almeno 1 trappola, nessuna mortale',
+  2: 'tutti gli slot armati, solo trappole nascoste',
+  3: 'tutti gli slot armati, almeno 1 mortale, niente legno',
+  4: 'almeno 2 nascoste, niente ferro',
+  5: 'tutti gli slot armati, esattamente 1 mortale',
+};
 
 /* Stanze. Coordinate in pixel sul palco 1280x720 (l'area di gioco è alta 560). */
 const ROOMS = [
@@ -555,6 +654,7 @@ function newGame() {
     repMaster: 0, repCreature: 0,
     goblinFine: 0,
     pond: { cibo: false, caldo: false },
+    appunti: {},       // stanze di cui hai comprato gli appunti segreti
   };
 }
 
@@ -671,14 +771,72 @@ function renderPrologue(page, lines = PROLOGO, chip = 'PROLOGO · IL TAVOLO DEL 
    CARRETTO DEL MASTER (negozio prima di ogni stanza)
    ========================================================= */
 let cart = {};
-const SHOP_NOTES = [[
-  '«Ti ho dato 100 monete, non un mutuo. Spendile con la testa.»',
-  '«Il corridoio ha slime. Gli slime odiano il sale. Te lo dico solo perché sono buono.»',
-  '«Ultima spesa. La sala del boss deve fare paura. E c\'è uno slime enorme, sappilo.»',
-], [
-  '«Gli attrezzi avanzati la settimana scorsa ce li hai ancora. Controlla prima di ricomprare.»',
-  '«Tesoreria: UNA trappola mortale, non due. E tieni qualcosa da parte: tiro il d20.»',
-]];
+/* ---------- Strategia: soffiate, appunti segreti, girini ---------- */
+const CONDIZIONI = {
+  goblinTenuto: () => S.goblin === 'tenuto',
+  goblinNonTenuto: () => S.goblin !== 'tenuto',
+  tangenteRifiutata: () => S.bribe === false,
+  cugino: () => !!S.cousin,
+  noCugino: () => !S.cousin,
+};
+const soffiate = room => SOFFIATE[room.id].filter(t => !t.quando || CONDIZIONI[t.quando]());
+
+// Sporco previsto nella stanza (con le conseguenze delle scelte già fatte)
+function sporcoPrevisto(room) {
+  const list = room.sporco.map(d => d.tipo);
+  if (room.id === 3 && S.bribe === false) list.push('ossa');
+  return list.filter(t => !(t === 'ossa' && S.goblin === 'tenuto' && room.id > 1)
+    && !(t === 'ragno' && S.cousin && room.id === 5));
+}
+// Trappole che non violano le regole della stanza
+const trappolaAdatta = {
+  1: t => !t.mortale,
+  2: t => !t.visibile,
+  3: t => t.materiale !== 'legno',
+  4: t => t.materiale !== 'ferro',
+  5: () => true,
+};
+function openAppunti(room) {
+  const counts = {};
+  sporcoPrevisto(room).forEach(t => { counts[t] = (counts[t] || 0) + 1; });
+  const righeSporco = Object.entries(counts).map(([tipo, n]) => {
+    const tk = DIRT[tipo].tool, tool = TOOLS[tk];
+    const have = S.tools[tk] + (cart[tk] || 0) * tool.usi;
+    const ok = have >= n;
+    return `<li><img src="${A(DIRT[tipo].img)}" alt=""><span><b>${n} × ${DIRT[tipo].nome}</b> → ${tool.nome.toLowerCase()} (${n} ${n === 1 ? 'uso' : 'usi'})</span>
+      <span class="${ok ? 'good' : 'bad'}">${ok ? '✓ ' : ''}ne hai ${have}</span></li>`;
+  }).join('');
+  const adatte = Object.entries(TRAPS).filter(([, t]) => unlocked(t) && trappolaAdatta[room.id](t))
+    .map(([k, t]) => `<span class="tag ${t.mortale ? 'mortale' : t.visibile ? 'visibile' : 'nascosta'}">${t.nome}${t.mortale ? ' ☠' : ''}</span>`).join(' ');
+  modalOpen = true;
+  const m = $('#modal');
+  m.innerHTML = `
+    <div class="appunti">
+      <div class="ap-head"><img src="${A('schermo')}" alt=""><div><b>APPUNTI SEGRETI DEL MASTER</b><span>Dietro lo schermo · ${room.nome}</span></div></div>
+      <h4>SPORCO DA PULIRE</h4>
+      <ul class="ap-list">${righeSporco}</ul>
+      <h4>TRAPPOLE · ${room.slots.length} slot</h4>
+      <p>Obiettivo: <b>${OBIETTIVO_TRAPPOLE[room.id]}</b>.</p>
+      <p>Vanno bene: ${adatte}</p>
+      <h4>IL SEGRETO</h4>
+      <p class="ap-secret">${APPUNTI_SEGRETI[room.id]}</p>
+      <button class="small-btn" id="btn-ap-close">HO CAPITO, CAPO</button>
+    </div>`;
+  m.classList.remove('hidden');
+  $('#btn-ap-close').onclick = () => { sfx('click'); m.classList.add('hidden'); modalOpen = false; };
+}
+function girini(left) {
+  const pct = Math.min(100, Math.round(left / SPESE_STAGNO * 100));
+  const ok = left >= SPESE_STAGNO;
+  return `<div class="girini">
+    <div class="g-head"><img src="${A('girino')}" alt=""><b>LA CENA DEI GIRINI</b><span class="gold">${SPESE_STAGNO} <img class="coin-s" src="${A('moneta')}" alt="monete"></span></div>
+    <div class="g-bar"><i class="${ok ? 'ok' : ''}" style="width:${pct}%"></i></div>
+    <p>${ok
+      ? `Con ${left} monete da parte, i girini mangiano anche se il Master ti paga poco.`
+      : `Ti resterebbero ${left} monete. Per i girini conterai sulla paga: 10 monete per ogni punto di voto. Lavora bene.`}</p>
+  </div>`;
+}
+
 function cartCost() {
   let c = 0;
   for (const [k, n] of Object.entries(cart)) c += (TOOLS[k] || TRAPS[k]).prezzo * n;
@@ -706,10 +864,6 @@ function renderShop() {
         <button data-k="${key}" data-d="1" ${canBuy ? '' : 'disabled'}>COMPRA</button>
       </div></div>`;
   };
-  const rows = Object.entries(cart).filter(([, n]) => n).map(([k, n]) => {
-    const d = TOOLS[k] || TRAPS[k];
-    return `<div class="row"><span>${d.nome} ×${n}</span><span class="gold">${d.prezzo * n}</span></div>`;
-  }).join('') || '<div class="muted">Il carretto è vuoto.</div>';
   $('#scr-shop').innerHTML = `
     <div class="shop-head">
       <div><h1>IL CARRETTO DEL MASTER</h1><p>${S.level ? 'Sessione 2 · ' : ''}Prima della stanza «${room.nome}» — il budget vale per tutta la sessione</p></div>
@@ -721,18 +875,15 @@ function renderShop() {
         <h3 style="margin-top:14px">TRAPPOLE</h3><div class="cards">${Object.entries(TRAPS).filter(([, d]) => unlocked(d)).map(([k, d]) => card(k, d, false)).join('')}</div>
       </div>
       <div class="cart panel">
-        <h2>NEL CARRETTO</h2>
-        <div class="rows">${rows}</div>
-        <hr>
-        <div class="rows">
-          <div class="row"><b>Totale</b><span class="gold">${cartCost()}</span></div>
-          <div class="row"><span>Restano dopo l'acquisto</span><span class="gold">${left}</span></div>
-        </div>
-        ${S.elmo ? `<button class="btn ghost" id="btn-elmo" style="width:100%;color:var(--gold);border-color:var(--gold)">VENDI L'ELMO ABBANDONATO +20</button>` : ''}
-        <div class="note"><b>MASTER:</b>${SHOP_NOTES[S.level][S.roomIndex]}</div>
-        <div><div class="muted" style="font-size:13px;font-weight:600">PROSSIMA STANZA</div>
-          <div style="font-size:16px">${room.nome} · ${room.slots.length} slot · ${room.regole.length} regole</div></div>
+        <div class="tips-head"><img src="${A('master')}" alt=""><div><h2>SOFFIATE DEL MASTER</h2><span class="muted">${room.nome} · ${room.slots.length} slot · ${room.regole.length} regole</span></div></div>
+        <ul class="tips">${soffiate(room).map(t => `<li><img src="${A(t.ico)}" alt=""><span>${t.t}</span></li>`).join('')}</ul>
+        <button class="btn ghost secret-btn" id="btn-appunti">${S.appunti[room.id]
+          ? '📜 RILEGGI GLI APPUNTI SEGRETI'
+          : `📜 APPUNTI SEGRETI DEL MASTER <span class="gold">· ${PREZZO_APPUNTI} <img class="coin-s" src="${A('moneta')}" alt="monete"></span>`}</button>
+        ${S.level === 0 ? girini(left) : ''}
         <div class="grow"></div>
+        ${S.elmo ? `<button class="btn ghost" id="btn-elmo" style="width:100%;color:var(--gold);border-color:var(--gold)">VENDI L'ELMO ABBANDONATO +20</button>` : ''}
+        <div class="cart-sum"><span>Nel carretto: <b class="gold">${cartCost()}</b></span><span>Ti restano: <b class="gold">${left}</b></span></div>
         <button class="btn" id="btn-go">VAI: ${room.nome.toUpperCase()} →</button>
       </div>
     </div>`;
@@ -741,6 +892,13 @@ function renderShop() {
     cart[k] = Math.max(0, (cart[k] || 0) + d);
     sfx(d > 0 ? 'coin' : 'click'); renderShop();
   });
+  $('#btn-appunti').onclick = () => {
+    if (!S.appunti[room.id]) {
+      if (left < PREZZO_APPUNTI) { sfx('bad'); toast(`Gli appunti costano ${PREZZO_APPUNTI} monete: togli qualcosa dal carretto.`, 2400); return; }
+      S.money -= PREZZO_APPUNTI; S.appunti[room.id] = true; sfx('coin');
+    } else sfx('click');
+    renderShop(); openAppunti(room);
+  };
   const be = $('#btn-elmo');
   if (be) be.onclick = () => { S.elmo = false; S.money += 20; sfx('coin'); toast('Elmo venduto: +20 monete'); renderShop(); };
   $('#btn-go').onclick = () => {
